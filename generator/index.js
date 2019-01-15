@@ -1,39 +1,59 @@
 function runner(generator) {
   const resultArray = [];
 
-  function execute(generator, yieldValue) {
-    let next = generator.next(yieldValue);
+  return new Promise( resolve => {
+    function execute(generator, yieldValue) {
+      let next = generator.next(yieldValue);
 
-    if (!next.done) {
-      if(typeof next.value === 'function') {
-        const result = next.value();
-        resultArray.push(result);
-        execute(generator, result);
-      }
-      else if (next.value instanceof Promise) {
-        next.value.then(
-          data => {
-            resultArray.push(data);
-            execute(generator, data);
-          },
-          err => {
-            console.log(err);
-          }
-        );
+      if (!next.done) {
+        if(typeof next.value === 'function') {
+          const result = next.value();
+          resultArray.push(result);
+          execute(generator, result);
+        }
+        else if (next.value instanceof Promise) {
+          next.value.then(
+            data => {
+              resultArray.push(data);
+              execute(generator, data);
+            },
+            err => {
+              console.log(err);
+            }
+          );
 
+        }
+        else {
+          const result = next.value;
+          resultArray.push(result);
+          execute(generator, result);
+        }
+      } else {
+        resolve(resultArray);
       }
-      else {
-        const result = next.value;
-        resultArray.push(result);
-        execute(generator, result);
-      }
-    } else {
-      return;
     }
-  }
-  execute(generator);
-  console.log(resultArray);
+
+    execute(generator);
+    console.log(resultArray);
+  })
 }
+
+const sum = (a, b) => a + b;
+
+const prom = new Promise(res => {
+  setTimeout(res, 0, 10)
+});
+
+function *gen() {
+  const a = yield () => sum(1,2);
+  const a1 = yield a + 10;
+  const b = yield prom;
+  const b1 = yield b +1;
+  const c = yield {user: 'userName'};
+  // console.log(a, a1, b, c);
+}
+const g = gen();
+runner(g);
 
 //     let data = generator.next();
 //     let { value, done } = data;
@@ -95,20 +115,3 @@ function runner(generator) {
 //   console.log(data);
 //   // return runner(generator);
 // }
-
-const sum = (a, b) => a + b;
-
-const prom = new Promise(res => {
-  setTimeout(res, 0, 10)
-});
-
-function *gen() {
-  const a = yield () => sum(1,2);
-  const a1 = yield a + 10;
-  const b = yield prom;
-  const b1 = yield b +1;
-  const c = yield {user: 'userName'};
-  // console.log(a, a1, b, c);
-}
-const g = gen();
-runner(g);
