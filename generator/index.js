@@ -2,7 +2,7 @@ function runner(iterator) {
   const resultArray = [];
 
   return new Promise((res, rej) => {
-      function executor(previousValue) {
+      function runIterator(previousValue) {
         const { value, done } = iterator.next(previousValue);
 
         if(done) {
@@ -10,22 +10,22 @@ function runner(iterator) {
         }
         else if (value instanceof Promise){
           value.then(
-            data => executor(data),
+            data => runIterator(data),
             err => rej(err)
           );
         }
         else if (typeof value === 'function') {
           const result = value();
           resultArray.push(result);
-          executor(result);
+          runIterator(result);
         }
         else {
           resultArray.push(value);
-          executor(value);
+          runIterator(value);
         }
       }
 
-      executor();
+      runIterator();
     })
 }
 
