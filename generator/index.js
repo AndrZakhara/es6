@@ -1,8 +1,8 @@
 function runner(generator) {
   const resultArray = [];
 
-  return new Promise( resolve => {
-    function execute(generator, yieldValue) {
+  return new Promise(resolve => {
+    function execute(generator, yieldValue = null) {
       let next = generator.next(yieldValue);
 
       if (!next.done) {
@@ -10,20 +10,16 @@ function runner(generator) {
           const result = next.value();
           resultArray.push(result);
           execute(generator, result);
-        }
-        else if (next.value instanceof Promise) {
+        } else if (next.value instanceof Promise) {
           next.value.then(
             data => {
-              resultArray.push(data);
               execute(generator, data);
             },
             err => {
               console.log(err);
             }
           );
-
-        }
-        else {
+        } else {
           const result = next.value;
           resultArray.push(result);
           execute(generator, result);
@@ -34,84 +30,33 @@ function runner(generator) {
     }
 
     execute(generator);
-    console.log(resultArray);
   })
 }
 
-const sum = (a, b) => a + b;
+function sum() {
+  console.log(1);
+  return [].reduce.call(arguments, (acc, el) => acc+=el);
+}
 
-const prom = new Promise(res => {
-  setTimeout(res, 0, 10)
+const prom = x => new Promise(res => {
+  console.log(2);
+  setTimeout(res,2000,x);
 });
 
-function *gen() {
-  const a = yield () => sum(1,2);
-  const a1 = yield a + 10;
-  const b = yield prom;
-  const b1 = yield b +1;
-  const c = yield {user: 'userName'};
-  // console.log(a, a1, b, c);
+function pow() {
+  console.log(3);
+  return [].reduce.call(arguments, (acc, el) => acc*=el);
 }
-const g = gen();
-runner(g);
 
-//     let data = generator.next();
-//     let { value, done } = data;
-//     console.log(`value: ${value}`);
-//     console.log(`done: ${done}`);
-//
-//     const executor = (generator, value) => {
-//       console.log('-----')
-//       resultArray.push(value);
-//       switch (typeof value) {
-//         case 'function':
-//           console.log('function');
-//           const result = value();
-//           resultArray.push(result);
-//           data = generator.next(result);
-//           value = data.value;
-//           done = data.done;
-//           executor(generator, value);
-//           break;
-//         case 'object':
-//           if(value instanceof Promise) {
-//             value.then(data => {
-//               value = data;
-//               console.log(`value: ${value}`);
-//             });
-//             executor(generator, value);
-//             break;
-//           } else {
-//           console.log('object');
-//           resultArray.push(value);
-//           data = generator.next(value);
-//           value = data.value;
-//           done = data.done;
-//           executor(generator, value);
-//           break;
-//         }
-//
-//         default:
-//           console.log('primitive');
-//           resultArray.push(value);
-//           data = generator.next(value);
-//           value = data.value;
-//           done = data.done;
-//           executor(generator, value);
-//       }
-//
-//       if (!done) {
-//         value.then(
-//           result => execute(generator, result),
-//           err => generator.throw(err)
-//         );
-//
-//         return;
-//     };
-//
-//
-//
-//
-//   console.log(data);
-//   // return runner(generator);
-// }
+const arr = [1,2,3,4];
+
+function *gen() {
+  const a = yield sum.bind(null, ...arr);
+  const b = yield prom(a);
+  const c = yield pow.bind(null, ...arr);
+  const d = yield arr;
+  yield a + b + c + d;
+}
+
+runner(gen()).then(data => console.log(data.pop() === '441,2,3,4' ? "Good Job" : "You are fail this task"))
+
