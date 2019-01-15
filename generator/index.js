@@ -2,8 +2,8 @@ function runner(generator) {
   const resultArray = [];
 
   return new Promise(resolve => {
-    function execute(generator, yieldValue = null) {
-      let next = generator.next(yieldValue);
+    function execute(generator, yieldValue) {
+      let next = yieldValue !== undefined ? generator.next(yieldValue) : generator.next();
 
       if (!next.done) {
         if(typeof next.value === 'function') {
