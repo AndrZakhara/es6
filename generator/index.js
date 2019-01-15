@@ -1,36 +1,32 @@
-function runner(generator) {
+function runner(iterator) {
   const resultArray = [];
 
-  return new Promise(resolve => {
-    function execute(generator, yieldValue) {
-      let next = yieldValue !== undefined ? generator.next(yieldValue) : generator.next();
+  return new Promise((res, rej) => {
+      function executor(previousValue) {
+        const { value, done } = iterator.next(previousValue);
 
-      if (!next.done) {
-        if(typeof next.value === 'function') {
-          const result = next.value();
-          resultArray.push(result);
-          execute(generator, result);
-        } else if (next.value instanceof Promise) {
-          next.value.then(
-            data => {
-              execute(generator, data);
-            },
-            err => {
-              console.log(err);
-            }
-          );
-        } else {
-          const result = next.value;
-          resultArray.push(result);
-          execute(generator, result);
+        if(done) {
+          res(resultArray);
         }
-      } else {
-        resolve(resultArray);
+        else if (value instanceof Promise){
+          value.then(
+            data => executor(data),
+            err => rej(err)
+          );
+        }
+        else if (typeof value === 'function') {
+          const result = value();
+          resultArray.push(result);
+          executor(result);
+        }
+        else {
+          resultArray.push(value);
+          executor(value);
+        }
       }
-    }
 
-    execute(generator);
-  })
+      executor();
+    })
 }
 
 function sum() {
@@ -59,4 +55,3 @@ function *gen() {
 }
 
 runner(gen()).then(data => console.log(data.pop() === '441,2,3,4' ? "Good Job" : "You are fail this task"))
-
