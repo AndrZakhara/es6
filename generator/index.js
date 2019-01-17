@@ -9,7 +9,7 @@ function runner(iterator) {
           return res(resultArray);          
         }
 
-        if (value instanceof Promise && !done){
+        if (value instanceof Promise){
           return value.then(
             data => runIterator(data),
             rej
