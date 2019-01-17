@@ -4,25 +4,26 @@ function runner(iterator) {
   return new Promise((res, rej) => {
       function runIterator(previousValue) {
         const { value, done } = iterator.next(previousValue);
+        
+        if (done) {
+          return res(resultArray);          
+        }
 
-        if(done) {
-          res(resultArray);
-        }
-        else if (value instanceof Promise){
-          value.then(
+        if (value instanceof Promise && !done){
+          return value.then(
             data => runIterator(data),
-            err => rej(err)
+            rej
           );
-        }
-        else if (typeof value === 'function') {
+
+        } else if (typeof value === 'function') {
           const result = value();
           resultArray.push(result);
-          runIterator(result);
+
+          return runIterator(result);
         }
-        else {
-          resultArray.push(value);
-          runIterator(value);
-        }
+
+        resultArray.push(value);
+        runIterator(value);
       }
 
       runIterator();
